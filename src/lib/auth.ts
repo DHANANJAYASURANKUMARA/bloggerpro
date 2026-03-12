@@ -45,7 +45,11 @@ export const authOptions: NextAuthOptions = {
 
           return user;
         } catch (error: any) {
-          console.error("[AUTH] Authorization error:", error.message || error);
+          console.error("[AUTH] Authorization logic failure:", {
+            message: error.message,
+            stack: error.stack,
+            credentials: { email: credentials?.email }
+          });
           throw new Error(error.message || "Internal server error during auth");
         }
       },
@@ -61,6 +65,7 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, token }) {
+      console.log("[AUTH] Session callback triggered", { sub: token?.sub });
       if (session.user && token.sub) {
         // Verify user still exists in DB and select all required fields
         const dbUser = await prisma.user.findUnique({
