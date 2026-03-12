@@ -58,11 +58,21 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET,
+  logger: {
+    error(code, metadata) {
+      console.error(`[NEXTAUTH_ERROR] ${code}`, metadata);
+    },
+    warn(code) {
+      console.warn(`[NEXTAUTH_WARN] ${code}`);
+    },
+    debug(code, metadata) {
+      console.log(`[NEXTAUTH_DEBUG] ${code}`, metadata);
+    },
+  },
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, token }) {
       console.log("[AUTH] Session callback triggered", { sub: token?.sub });
