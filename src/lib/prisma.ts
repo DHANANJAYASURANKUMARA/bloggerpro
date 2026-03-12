@@ -2,7 +2,10 @@ import "server-only";
 import { PrismaClient } from "@prisma/client";
 
 const prismaClientSingleton = () => {
-  return new PrismaClient();
+  console.log("[PRISMA] Initializing new client... DB_URL exists:", !!process.env.DATABASE_URL);
+  return new PrismaClient({
+    log: ["error", "warn"],
+  });
 };
 
 declare global {
