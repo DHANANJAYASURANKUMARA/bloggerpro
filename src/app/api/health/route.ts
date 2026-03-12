@@ -20,9 +20,11 @@ export async function GET() {
     DATABASE_REACHABLE: db_connection,
     NEXTAUTH_SECRET: !!process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || "NOT SET",
-    AUTH_TRUST_HOST: !!process.env.AUTH_TRUST_HOST,
+    AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST || "NOT SET",
+    VERCEL: !!process.env.VERCEL,
     NODE_ENV: process.env.NODE_ENV,
     authenticated: !!session,
+    timestamp: new Date().toISOString()
   };
 
   return NextResponse.json(health);
