@@ -20,27 +20,34 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          throw new Error("Missing credentials");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+          });
 
-        if (!user || !user.password) {
-          throw new Error("User not found");
+          if (!user || !user.password) {
+            console.error(`[AUTH] User not found or no password: ${credentials.email}`);
+            throw new Error("Invalid credentials");
+          }
+
+          const isCorrectPassword = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isCorrectPassword) {
+            console.error(`[AUTH] Password mismatch for: ${credentials.email}`);
+            throw new Error("Invalid credentials");
+          }
+
+          return user;
+        } catch (error: any) {
+          console.error("[AUTH] Authorization error:", error.message || error);
+          throw new Error(error.message || "Internal server error during auth");
         }
-
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isCorrectPassword) {
-          throw new Error("Invalid password");
-        }
-
-        return user;
       },
     }),
   ],
