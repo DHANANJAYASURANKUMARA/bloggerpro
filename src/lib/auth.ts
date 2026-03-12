@@ -55,26 +55,35 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (session.user && token.sub) {
-        // Verify user still exists in DB
+        // Verify user still exists in DB and select all required fields
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { id: true, role: true, bio: true }
+          select: { 
+            id: true, 
+            role: true, 
+            bio: true,
+            notifNetwork: true,
+            notifDirect: true,
+            notifMarket: true,
+            notifTransaction: true,
+            prefDarkMode: true,
+            prefLowNoise: true
+          }
         });
 
         if (!dbUser || dbUser.role === "BANNED") {
-          // If user doesn't exist or is banned, invalidate the session
           return null as any;
         }
 
         (session.user as any).id = dbUser.id;
         (session.user as any).role = dbUser.role;
         (session.user as any).bio = dbUser.bio;
-        (session.user as any).notifNetwork = (dbUser as any).notifNetwork;
-        (session.user as any).notifDirect = (dbUser as any).notifDirect;
-        (session.user as any).notifMarket = (dbUser as any).notifMarket;
-        (session.user as any).notifTransaction = (dbUser as any).notifTransaction;
-        (session.user as any).prefDarkMode = (dbUser as any).prefDarkMode;
-        (session.user as any).prefLowNoise = (dbUser as any).prefLowNoise;
+        (session.user as any).notifNetwork = dbUser.notifNetwork;
+        (session.user as any).notifDirect = dbUser.notifDirect;
+        (session.user as any).notifMarket = dbUser.notifMarket;
+        (session.user as any).notifTransaction = dbUser.notifTransaction;
+        (session.user as any).prefDarkMode = dbUser.prefDarkMode;
+        (session.user as any).prefLowNoise = dbUser.prefLowNoise;
       }
       return session;
     },
