@@ -28,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Fetch all forum topics
   const topics = await prisma.forumTopic.findMany();
-  const topicUrls = topics.map((topic: any) => ({
+  const topicUrls = topics.map((topic) => ({
     url: `${baseUrl}/community/topic/${topic.id}`,
     lastModified: topic.createdAt,
     changeFrequency: 'daily' as const,
