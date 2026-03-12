@@ -8,24 +8,30 @@ interface ArticleGridProps {
 }
 
 export default async function ArticleGrid({ categoryId, limit = 6 }: ArticleGridProps) {
-  const posts = await prisma.post.findMany({
-    where: {
-      published: true,
-      ...(categoryId ? { categoryId } : {}),
-    },
-    take: limit,
-    include: {
-      author: {
-        select: { name: true, image: true },
+  let posts: any[] = [];
+  try {
+    posts = await prisma.post.findMany({
+      where: {
+        published: true,
+        ...(categoryId ? { categoryId } : {}),
       },
-      category: {
-        select: { name: true, slug: true },
+      take: limit,
+      include: {
+        author: {
+          select: { name: true, image: true },
+        },
+        category: {
+          select: { name: true, slug: true },
+        },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  } catch (error) {
+    console.error("[ARTICLE_GRID_ERROR] Failed to fetch posts:", error);
+    posts = [];
+  }
 
   if (posts.length === 0) {
     return (
