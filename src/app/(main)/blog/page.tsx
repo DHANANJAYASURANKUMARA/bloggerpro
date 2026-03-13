@@ -7,20 +7,26 @@ import { Suspense } from "react";
 export const dynamic = "force-dynamic";
 
 export default async function BlogPage() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    include: {
-      author: {
-        select: { name: true, image: true },
+  let posts: any[] = [];
+  try {
+    posts = await prisma.post.findMany({
+      where: { published: true },
+      include: {
+        author: {
+          select: { name: true, image: true },
+        },
+        category: {
+          select: { name: true, slug: true },
+        },
       },
-      category: {
-        select: { name: true, slug: true },
+      orderBy: {
+        createdAt: "desc",
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+    });
+  } catch (error) {
+    console.error("[BLOG_PAGE_ERROR] Failed to fetch posts:", error);
+    posts = [];
+  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 pt-32 pb-20">
