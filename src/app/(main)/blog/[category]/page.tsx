@@ -11,27 +11,31 @@ export async function generateMetadata({
   params: Promise<{ category: string }>;
 }): Promise<Metadata> {
   const { category: categorySlug } = await params;
-  const category = await prisma.category.findUnique({
-    where: { slug: categorySlug }
-  });
+  try {
+    const category = await prisma.category.findUnique({
+      where: { slug: categorySlug }
+    });
 
-  if (!category) return { title: "Category Not Found" };
+    if (!category) return { title: "Category Not Found" };
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://bloggerpro.com";
-  const url = `${baseUrl}/blog/${category.slug}`;
+    const baseUrl = process.env.NEXTAUTH_URL || "https://bloggerpro.com";
+    const url = `${baseUrl}/blog/${category.slug}`;
 
-  return {
-    title: `${category.name} | Expert Financial Guides & Tips`,
-    description: `Master ${category.name} with our professional guides at BloggerPro. Real-world wealth strategies and insights.`,
-    alternates: {
-      canonical: url,
-    },
-    openGraph: {
-      title: `${category.name} | BloggerPro`,
-      description: `Expert financial articles and guides on ${category.name}.`,
-      url: url,
-    }
-  };
+    return {
+      title: `${category.name} | Expert Financial Guides & Tips`,
+      description: `Master ${category.name} with our professional guides at BloggerPro. Real-world wealth strategies and insights.`,
+      alternates: {
+        canonical: url,
+      },
+      openGraph: {
+        title: `${category.name} | BloggerPro`,
+        description: `Expert financial articles and guides on ${category.name}.`,
+        url: url,
+      }
+    };
+  } catch (error) {
+    return { title: "BloggerPro | Wealth Building" };
+  }
 }
 
 export const dynamic = "force-dynamic";
@@ -42,26 +46,36 @@ export default async function CategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category: categorySlug } = await params;
+  let category: any = null;
+  let posts: any[] = [];
 
-  const category = await prisma.category.findUnique({
-    where: { slug: categorySlug },
-    include: {
-      _count: { select: { posts: true } }
+  try {
+    category = await prisma.category.findUnique({
+      where: { slug: categorySlug },
+      include: {
+        _count: { select: { posts: true } }
+      }
+    });
+
+    if (category) {
+      posts = await prisma.post.findMany({
+        where: { 
+          categoryId: category.id,
+          published: true 
+        },
+        orderBy: { createdAt: "desc" },
+        include: { author: true, category: true }
+      });
     }
-  });
-
-  if (!category) {
-    notFound();
+  } catch (error) {
+    console.error("[CATEGORY_PAGE_ERROR] Failed to fetch data:", error);
   }
 
-  const posts = await prisma.post.findMany({
-    where: { 
-      categoryId: category.id,
-      published: true 
-    },
-    orderBy: { createdAt: "desc" },
-    include: { author: true, category: true }
-  });
+  if (!category) {
+    // If we're here because of a DB error, we might want to show a custom "Service Unavailable"
+    // but notFound() is cleaner for invalid slugs.
+    notFound();
+  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-black pt-32 pb-20">
